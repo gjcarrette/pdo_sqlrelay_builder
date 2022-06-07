@@ -1,9 +1,7 @@
 --TEST--
-pdo_test.php --test some transaction features.
+pdo_test.php --test IDENTITY column and PDO::lastInsertId
 --SKIPIF--
-<?php if(!extension_loaded('pdo_sqlrelay')) die('skip ');
-      if(empty(getenv("RUN_FAILING_TESTS"))) die('skip ');
-?>
+<?php if(!extension_loaded('pdo_sqlrelay')) die('skip '); ?>
 --FILE--
 <?php
 
@@ -13,6 +11,7 @@ $table_name = "TEMP1";
 
 $sql_create_temp = <<<GO
 create table #{$table_name} (
+ -- NOTE: This starts out as an 11 digit number, and then goes to 12 digits next.
  MYID BIGINT NOT NULL IDENTITY(99999999999, 9),
  MYNAME NVARCHAR(100) NOT NULL
 )
