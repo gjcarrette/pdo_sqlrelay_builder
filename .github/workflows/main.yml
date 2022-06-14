@@ -13,7 +13,7 @@ on:
       - 'g*'
 
 jobs:
-  ubuntu:
+  php_test_matrix:
     name: Test in PHP version
     runs-on: ubuntu-latest
 
@@ -25,94 +25,7 @@ jobs:
           - "8.1"
 
     steps:
-      - name: Install dependencies
-        run: |
-          lsb_release -a
-          sudo apt-get update
-      - name: Checkout repo
-        uses: actions/checkout@v2
-      - name: install sqlrelay vendor dependencies
-        run: |
-          bash bin/sqlrelay-vendor-pkgs.sh show-env
-          bash bin/sqlrelay-vendor-pkgs.sh download
-          bash bin/sqlrelay-vendor-pkgs.sh apt-enable
-          bash bin/sqlrelay-vendor-pkgs.sh apt-install
-      - name: Setup PHP
-        uses: "shivammathur/setup-php@v2"
+      - name: build-and-test
+        uses: ./.github/workflows/build-and-test.yml
         with:
-          php-version: "${{ matrix.php-version }}"
-          coverage: "none"
-          tools: "phpize, php-config"
-      - name: Generate build files
-        run: phpize
-      - name: Configure build
-        run: CFLAGS="-Wall" ./configure
-      - name: Build
-        run: make all
-      - name: PHP Info
-        run: php -info
-      - name: setup log dirs
-        run: >-
-          mkdir artifacts artifacts/client-log artifacts/test
-          artifacts/exe artifacts/build artifacts/server-log
-      - name: collect package info
-        run: |
-         lsb_release -a > artifacts/build/environment.txt
-         echo "" >> artifacts/build/environment.txt
-         php --version >> artifacts/build/environment.txt
-         apt list --installed "sqlrelay*" "rudiments*" > artifacts/build/installed.txt
-      - name: start Microsoft SQL Server
-        run: bash bin/mssql.sh start
-      - name: sleep before testing mssql
-        # We could do a loop until the test succeeds
-        run: sleep 15
-      - name: test mssql
-        run: bash bin/mssql.sh test
-      - name: setup mssql
-        run: bash bin/mssql.sh setup
-      - name: config sqlrelay
-        run: bash bin/sqlrelay.sh config
-      - name: start sqlrelay
-        run: bash bin/sqlrelay.sh start
-      - name: test sqlrelay
-        run: bash bin/sqlrelay.sh test
-      - name: show sqlrelay 1
-        run: bash bin/sqlrelay.sh show
-      - name: Run tests
-        run: >-
-          SQLR_CLIENT_DEBUG_PREFIX=artifacts/client-log/
-          RUN_FAILING_TESTS=1
-          REPORT_EXIT_STATUS=1
-          NO_INTERACTION=1
-          TEST_PHP_EXECUTABLE=$(which php)
-          php -n
-          -d open_basedir=
-          -d output_buffering=0
-          -d memory_limit=-1
-          run-tests.php -n
-          -d extension_dir=modules
-          -d extension=$(php -r 'echo PHP_EXTENSION_DIR;')/pdo.so
-          -d extension=pdo_sqlrelay.so
-          tests
-      - name: show sqlrelay 2
-        if: always()
-        run: bash bin/sqlrelay.sh show
-      - name: stop sqlrelay
-        if: always()
-        run: bash bin/sqlrelay.sh stop
-      - name: stop Microsoft SQL Server
-        if: always()
-        run: bash bin/mssql.sh stop
-      - name: collect artifacts
-        if: always()
-        run: |
-         bash bin/careful-mv.sh tests/*.diff artifacts/test
-         bash bin/careful-mv.sh modules/pdo_sqlrelay.so artifacts/exe
-         bash bin/careful-mv.sh /var/log/sqlrelay/debug/* artifacts/server-log
-         bash bin/careful-mv.sh /var/log/sqlrelay/odbc/* artifacts/server-log
-      - name: publish artifacts
-        if: always()
-        uses: actions/upload-artifact@v3
-        with: 
-          name: artifacts-of-test-${{ matrix.php-version }}
-          path: artifacts
+         php-version: ${{  matrix.php-version }}"
