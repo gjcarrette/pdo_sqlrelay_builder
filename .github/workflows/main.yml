@@ -15,6 +15,7 @@ on:
 jobs:
   php_test_matrix:
     name: Test in PHP version
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
