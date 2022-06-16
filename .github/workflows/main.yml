@@ -14,16 +14,6 @@ on:
 
 jobs:
   php_test_matrix:
-    name: Test in PHP version
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        php-version:
-          - "7.4"
-          - "8.1"
-
     uses: ./.github/workflows/build-and-test.yml
     with:
       php-version: ${{  matrix.php-version }}"
