@@ -24,8 +24,8 @@ jobs:
           - "7.4"
           - "8.1"
 
-    steps:
-      - name: build-and-test
-        uses: ./.github/workflows/build-and-test.yml
-        with:
-         php-version: ${{  matrix.php-version }}"
+    uses: ./.github/workflows/build-and-test.yml
+    with:
+      php-version: ${{  matrix.php-version }}"
+      compiler-optimization-level: '2'
+      valgrind-tool: 'none'
